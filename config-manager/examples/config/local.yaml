@@ -1,0 +1,15 @@
+database:
+  host: localhost
+  port: 5432
+  name: local_db
+  credentials:
+    user: local_user
+    password: local_pass
+
+api:
+  baseUrl: http://localhost:3000
+  timeout: 5000
+
+features:
+  enableCache: true
+  maxRetries: 3

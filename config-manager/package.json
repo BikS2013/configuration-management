@@ -1,0 +1,42 @@
+{
+  "name": "@biks2013/config-manager",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Configuration management library with GitHub asset retrieval and PostgreSQL storage",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "./scripts/build-all.sh",
+    "test": "npm run test -w @biks2013/github-asset-client && npm run test -w @biks2013/asset-database && npm run test -w @biks2013/config-service",
+    "lint": "npm run lint -w @biks2013/github-asset-client && npm run lint -w @biks2013/asset-database && npm run lint -w @biks2013/config-service",
+    "clean": "npm run clean -w @biks2013/github-asset-client && npm run clean -w @biks2013/asset-database && npm run clean -w @biks2013/config-service",
+    "typecheck": "npm run typecheck -w @biks2013/github-asset-client && npm run typecheck -w @biks2013/asset-database && npm run typecheck -w @biks2013/config-service",
+    "dev": "npm run dev --ws --if-present",
+    "prepare": "husky install",
+    "setup-registry": "./scripts/setup-registry.sh",
+    "link-local": "./scripts/link-local.sh",
+    "create-repo": "./scripts/setup-github-repo.sh",
+    "publish:all": "./scripts/publish-all.sh"
+  },
+  "bin": {
+    "create-config-project": "./cli/setup-project.js"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.12",
+    "@types/lru-cache": "^7.10.9",
+    "@types/node": "^20.11.30",
+    "@typescript-eslint/eslint-plugin": "^7.3.1",
+    "@typescript-eslint/parser": "^7.3.1",
+    "eslint": "^8.57.0",
+    "husky": "^9.0.11",
+    "jest": "^29.7.0",
+    "prettier": "^3.2.5",
+    "ts-jest": "^29.1.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

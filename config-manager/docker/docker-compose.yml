@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  config-db:
+    build:
+      context: .
+      dockerfile: Dockerfile.postgres
+    container_name: config-manager-db
+    environment:
+      POSTGRES_DB: config_db
+      POSTGRES_USER: config_user
+      POSTGRES_PASSWORD: config_pass
+    ports:
+      - "5433:5432"
+    volumes:
+      - config_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U config_user -d config_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  config_db_data:

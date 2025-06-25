@@ -1,0 +1,32 @@
+[
+  {
+    "name": "data-processor",
+    "connectionString": "postgresql://user:pass@localhost:5432/processor",
+    "settings": {
+      "batchSize": 100,
+      "timeout": 30000,
+      "retryAttempts": 3,
+      "parallelism": 4
+    }
+  },
+  {
+    "name": "api-gateway",
+    "connectionString": "postgresql://user:pass@localhost:5432/gateway",
+    "settings": {
+      "port": 3000,
+      "cors": true,
+      "rateLimit": 1000,
+      "authEnabled": true
+    }
+  },
+  {
+    "name": "notification-service",
+    "connectionString": "postgresql://user:pass@localhost:5432/notifications",
+    "settings": {
+      "emailProvider": "sendgrid",
+      "smsProvider": "twilio",
+      "pushProvider": "firebase",
+      "retryPolicy": "exponential"
+    }
+  }
+]

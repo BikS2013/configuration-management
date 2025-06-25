@@ -1,0 +1,10 @@
+# PostgreSQL with config-manager schema
+FROM postgres:15-alpine
+
+# Copy initialization script
+COPY init-db.sql /docker-entrypoint-initdb.d/
+
+# Set default environment variables
+ENV POSTGRES_DB=config_db
+ENV POSTGRES_USER=config_user
+ENV POSTGRES_PASSWORD=config_pass
