@@ -172,11 +172,30 @@ app.post('/api/test', async (req, res) => {
                 const configService = configServiceFactory();
                 const config = await configService.getConfig();
                 
-                // Get the source after loading
-                const sourceUsed = (configService as any).getLastLoadSource?.() || 'unknown';
+                // Get the source after loading - try different ways to access it
+                let sourceUsed = 'unknown';
+                
+                // Try method call
+                if (typeof (configService as any).getLastLoadSource === 'function') {
+                    sourceUsed = (configService as any).getLastLoadSource();
+                } 
+                // Try direct property access
+                else if ((configService as any).lastLoadSource) {
+                    sourceUsed = (configService as any).lastLoadSource;
+                }
+                // Try through prototype
+                else if ((configService as any).__proto__ && (configService as any).__proto__.lastLoadSource) {
+                    sourceUsed = (configService as any).__proto__.lastLoadSource;
+                }
+                
                 console.log('Source used for loading:', sourceUsed);
-                console.log('ConfigService type:', configService.constructor.name);
-                console.log('Has getLastLoadSource method?', typeof (configService as any).getLastLoadSource);
+                console.log('ConfigService:', {
+                    type: configService.constructor.name,
+                    hasMethod: typeof (configService as any).getLastLoadSource,
+                    hasProperty: (configService as any).lastLoadSource,
+                    keys: Object.keys(configService),
+                    proto: Object.getPrototypeOf(configService).constructor.name
+                });
                 
                 if (config === null || config === undefined) {
                     // This means both sources failed - provide helpful information

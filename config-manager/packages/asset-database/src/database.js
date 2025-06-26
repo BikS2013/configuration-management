@@ -70,7 +70,15 @@ class AssetDatabaseService {
                 query += ' AND asset_category = $3';
                 params.push(category);
             }
+            console.log('Database getAsset query:', {
+                ownerKey: this.options.ownerKey,
+                assetKey: key,
+                category: category || 'not specified',
+                query: query.trim(),
+                params
+            });
             const result = await client.query(query, params);
+            console.log(`Database getAsset result: found ${result.rows.length} rows`);
             if (result.rows.length === 0) {
                 return null;
             }
