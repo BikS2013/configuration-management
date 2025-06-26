@@ -26,8 +26,15 @@ npm run build
 ```
 
 3. Start the test server:
+
+For development with auto-reload:
 ```bash
 npm run dev
+```
+
+For production mode:
+```bash
+npm start
 ```
 
 4. Open your browser to http://localhost:3333
@@ -76,8 +83,22 @@ The interface will display:
 - No caching or fallback
 - Useful for comparison and debugging
 
+## Auto-Reload Features
+
+When running in development mode (`npm run dev`), the server will automatically restart when:
+
+- Any TypeScript file in the project changes
+- The `.env` file is modified
+- Any source file in the config-manager packages changes
+
+The server includes:
+- Graceful shutdown handling (SIGTERM/SIGINT)
+- Environment variable hot-reloading
+- 1-second delay to batch multiple file changes
+
 ## Troubleshooting
 
 - **Database errors**: Ensure PostgreSQL is running and accessible
 - **GitHub errors**: Verify token permissions and repository access
 - **Network errors**: Check if the server is running on port 3333
+- **Auto-reload not working**: Ensure nodemon is installed (`npm install`)

@@ -1,0 +1,21 @@
+{
+  "watch": [
+    "server.ts",
+    "*.ts",
+    ".env",
+    "../../config-manager/packages/*/src/**/*.ts"
+  ],
+  "ext": "ts,js,json,env",
+  "ignore": [
+    "dist/**",
+    "node_modules/**",
+    "*.test.ts",
+    "*.spec.ts"
+  ],
+  "exec": "npm run build && node dist/server.js",
+  "env": {
+    "NODE_ENV": "development"
+  },
+  "delay": "1000",
+  "verbose": false
+}

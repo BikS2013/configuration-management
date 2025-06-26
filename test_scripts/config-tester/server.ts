@@ -4,8 +4,22 @@ import { GitHubAssetClient } from '@biks2013/github-asset-client';
 import { AssetDatabaseService } from '@biks2013/asset-database';
 import { createConfigService } from '@biks2013/config-service';
 import dotenv from 'dotenv';
+import fs from 'fs';
 
+// Load .env file
 dotenv.config();
+
+// Watch for .env file changes
+const envPath = path.join(__dirname, '..', '.env');
+let envWatcher: fs.FSWatcher | null = null;
+
+if (fs.existsSync(envPath)) {
+    fs.watchFile(envPath, (curr, prev) => {
+        console.log('.env file changed, reloading environment variables...');
+        dotenv.config({ override: true });
+        console.log('Environment variables reloaded');
+    });
+}
 
 const app = express();
 const PORT = 3333;
@@ -276,7 +290,32 @@ app.post('/api/test', async (req, res) => {
     }
 });
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
     console.log(`Config tester server running at http://localhost:${PORT}`);
     console.log(`Open http://localhost:${PORT} in your browser to test the library`);
+    console.log('Auto-reload enabled: Server will restart on file changes');
 });
+
+// Graceful shutdown
+const gracefulShutdown = (signal: string) => {
+    console.log(`\n${signal} signal received: closing HTTP server`);
+    
+    // Stop watching .env file
+    if (fs.existsSync(envPath)) {
+        fs.unwatchFile(envPath);
+    }
+    
+    server.close(() => {
+        console.log('HTTP server closed');
+        process.exit(0);
+    });
+    
+    // Force exit after 10 seconds
+    setTimeout(() => {
+        console.error('Could not close connections in time, forcefully shutting down');
+        process.exit(1);
+    }, 10000);
+};
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
