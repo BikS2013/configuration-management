@@ -12,11 +12,12 @@ This monorepo contains three integrated packages that work together to provide a
 
 ## Features
 
-- 🔄 **Multi-source fallback** - GitHub → Database (returns null if not found)
-- 💾 **Automatic caching** - In-memory and database caching for performance
+- 🔄 **GitHub-first with database fallback** - Always fetches latest from GitHub, falls back to cached version if unavailable
+- 💾 **Automatic caching** - Configurations fetched from GitHub are automatically cached to database
 - 📝 **Version history** - Full audit trail of configuration changes
 - 🔒 **Type safety** - Full TypeScript support with generics
 - 🔁 **Retry logic** - Exponential backoff for transient failures
+- 🛡️ **Resilient operation** - Continues working even when GitHub is down
 
 ## Installation
 
@@ -56,7 +57,7 @@ const configService = createConfigService<AppConfig>({
   sources: [
     {
       type: 'github',
-      priority: 1,
+      priority: 1,  // Primary source - always tried first
       options: {
         client: new GitHubAssetClient({
           repo: 'org/config-repo',
@@ -67,7 +68,7 @@ const configService = createConfigService<AppConfig>({
     },
     {
       type: 'database',
-      priority: 2,
+      priority: 2,  // Fallback - only used if GitHub fails
       options: {
         service: new AssetDatabaseService({
           connectionString: process.env.DATABASE_URL!,
@@ -80,8 +81,7 @@ const configService = createConfigService<AppConfig>({
   ],
   parser: async (content) => YAML.parse(content),
 }, (service, data) => {
-  service.configs.set('database', data.database);
-  service.configs.set('api', data.api);
+  // Process configuration - handled internally
 });
 
 // Use the service
@@ -90,20 +90,42 @@ const dbHost = await service.getConfig('database.host');
 
 // Handle null case when config not found
 if (dbHost === null) {
-  console.log('Configuration not found in GitHub or Database');
+  console.log('Configuration not found - GitHub unavailable and no cached version');
 }
 ```
 
 ## Architecture
 
-### Fallback Strategy
+### Configuration Loading Strategy
 
 ```
-┌─────────────┐     ┌──────────┐     ┌─────────┐
-│   Memory    │ --> │  GitHub  │ --> │Database │ --> Returns null
-│   Cache     │     │   Repo   │     │  Cache  │     if not found
-└─────────────┘     └──────────┘     └─────────┘
+┌──────────────┐
+│   Request    │
+└──────┬───────┘
+       │
+       ▼
+┌──────────────┐     Success      ┌─────────────────┐
+│    GitHub    │ ───────────────> │  Auto-cache to  │
+│   (Primary)  │                  │    Database     │
+└──────┬───────┘                  └─────────────────┘
+       │
+       │ Failure
+       ▼
+┌──────────────┐
+│   Database   │ ───────────────> Returns cached config
+│  (Fallback)  │
+└──────┬───────┘
+       │
+       │ Not found
+       ▼
+  Returns null
 ```
+
+**Key Points:**
+- GitHub is always tried first for latest configuration
+- Database is only used when GitHub is unavailable
+- Successful GitHub fetches are automatically cached
+- Provides resilience during GitHub outages
 
 ### Database Schema
 

@@ -37,6 +37,7 @@ export abstract class ConfigService<T> {
   protected configData?: T;
   protected initialized: boolean = false;
   protected readonly options: ConfigServiceOptions<T>;
+  protected lastLoadSource?: string;
   private watchers: any[] = [];
 
   constructor(options: ConfigServiceOptions<T>) {
@@ -50,6 +51,11 @@ export abstract class ConfigService<T> {
   abstract getAll(): Promise<Map<string, any>>;
   abstract reload(): Promise<void>;
   protected abstract processConfiguration(data: T): void;
+  
+  getLastLoadSource(): string | undefined {
+    console.log('getLastLoadSource called, value is:', this.lastLoadSource);
+    return this.lastLoadSource;
+  }
 
   protected async ensureInitialized(): Promise<void> {
     if (!this.initialized) {

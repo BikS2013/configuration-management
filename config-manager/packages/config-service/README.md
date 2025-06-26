@@ -10,12 +10,13 @@ npm install @biks2013/config-service
 
 ## Features
 
-- 🔄 Multi-source configuration with priority-based fallback
-- 📦 Support for GitHub and Database sources
+- 🔄 GitHub-first configuration with automatic database fallback
+- 📦 Support for GitHub (primary) and Database (fallback) sources
 - 🔒 Type-safe configuration with TypeScript generics
 - 💾 Automatic caching from GitHub to Database
 - 🏗️ Extensible architecture for custom configuration services
 - 🚫 Returns null when configuration not found in any source
+- 🛡️ Resilient operation when GitHub is unavailable
 
 ## Usage
 
@@ -41,7 +42,7 @@ const configService = createConfigService<AppConfig>({
   sources: [
     {
       type: 'github',
-      priority: 1,
+      priority: 1,  // Primary source - always tried first
       options: {
         client: new GitHubAssetClient({
           repo: 'org/config-repo',
@@ -52,7 +53,7 @@ const configService = createConfigService<AppConfig>({
     },
     {
       type: 'database',
-      priority: 2,
+      priority: 2,  // Fallback - only used if GitHub fails
       options: {
         service: new AssetDatabaseService({
           connectionString: process.env.DATABASE_URL!,
@@ -66,8 +67,7 @@ const configService = createConfigService<AppConfig>({
   parser: async (content) => YAML.parse(content),
 }, (service, data) => {
   // Process the parsed configuration
-  service.configs.set('database', data.database);
-  service.configs.set('features', data.features);
+  // Note: configs is protected, processing handled internally
 });
 
 // Use the service
@@ -76,7 +76,7 @@ const service = configService();
 // Get specific config values
 const dbHost = await service.getConfig('database.host');
 if (dbHost === null) {
-  console.log('Configuration not found in GitHub or Database');
+  console.log('Configuration not found - GitHub unavailable and no cached version in database');
   return;
 }
 
@@ -183,16 +183,23 @@ type ConfigProcessor<T> = (service: ConfigService<T>, data: T) => void;
 - `reload(): Promise<void>` - Reload configuration from sources
 - `destroy(): Promise<void>` - Clean up resources
 
-## Fallback Strategy
+## Configuration Loading Strategy
 
-Sources are tried in priority order (lowest number = highest priority):
+The service follows a GitHub-first approach with database fallback:
 
-1. Memory cache (if available)
-2. GitHub source (priority 1)
-3. Database source (priority 2)
-4. Returns `null` if not found in any source
+1. **Primary Source (GitHub)**: Always attempted first
+   - Fetches latest configuration from GitHub repository
+   - On success: Automatically caches to database for future fallback
+   - On failure: Falls back to database cache
 
-When configuration is loaded from GitHub, it's automatically cached to the database source (if available).
+2. **Fallback Source (Database)**: Only used when GitHub is unavailable
+   - Provides resilience during GitHub outages
+   - Contains previously cached configurations
+   - Never accessed directly unless GitHub fails
+
+3. **Returns `null`**: When configuration not found in any source
+
+This ensures you always get the latest configuration when possible, with automatic failover for reliability.
 
 ## License
 

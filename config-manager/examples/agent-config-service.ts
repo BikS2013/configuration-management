@@ -96,7 +96,7 @@ export function createAgentConfigService() {
     sources: [
       {
         type: 'github',
-        priority: 1,
+        priority: 1,  // Primary source - always tried first
         options: {
           client: new GitHubAssetClient({
             repo: process.env.CONFIG_REPO || 'org/config-repo',
@@ -108,7 +108,7 @@ export function createAgentConfigService() {
       },
       {
         type: 'database',
-        priority: 2,
+        priority: 2,  // Fallback - only used if GitHub fails
         options: {
           service: new AssetDatabaseService({
             connectionString: process.env.DATABASE_URL!,

@@ -72,12 +72,15 @@ export class GenericConfigService<T> extends ConfigService<T> {
   }
 
   async reload(): Promise<void> {
+    console.log('Service: Starting reload...');
     const result = await this.loadConfiguration();
     if (result) {
+      console.log('Service: Configuration loaded successfully');
       this.configData = result.data;
       this.processConfiguration(result.data);
       this.initialized = true;
     } else {
+      console.log('Service: No configuration found in any source');
       this.configData = undefined;
       this.configs.clear();
       this.initialized = true;
@@ -85,14 +88,17 @@ export class GenericConfigService<T> extends ConfigService<T> {
   }
 
   protected processConfiguration(data: T): void {
+    console.log('Service: Processing configuration, data:', JSON.stringify(data));
     this.configs.clear();
     this.processConfig.call(this, data);
+    console.log('Service: After processing, configs has', this.configs.size, 'entries');
   }
 
   private async loadConfiguration(): Promise<ConfigLoadResult<T> | null> {
     // Try sources in priority order
     for (const [key, { source, config }] of this.sources) {
       try {
+        console.log(`Attempting to load from ${config.type} source (priority ${config.priority})`);
         const content = await source.load();
         const data = await this.options.parser(content);
 
@@ -101,12 +107,15 @@ export class GenericConfigService<T> extends ConfigService<T> {
           await this.cacheToDatabase(content);
         }
 
+        console.log(`Successfully loaded from ${config.type} source`);
+        this.lastLoadSource = config.type;
         return {
           data,
           source: source.getName(),
           cached: false,
         };
-      } catch (error) {
+      } catch (error: any) {
+        console.log(`Failed to load from ${config.type}: ${error.message}, trying next source...`);
         // Continue to next source silently
         continue;
       }

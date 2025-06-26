@@ -26,7 +26,7 @@ async function main() {
     sources: [
       {
         type: 'github',
-        priority: 1,
+        priority: 1,  // Primary source - always fetches latest
         options: {
           client: new GitHubAssetClient({
             repo: 'org/config-repo',
@@ -40,7 +40,7 @@ async function main() {
       },
       {
         type: 'database',
-        priority: 2,
+        priority: 2,  // Fallback - only used if GitHub unavailable
         options: {
           service: new AssetDatabaseService({
             connectionString: process.env.DATABASE_URL!,

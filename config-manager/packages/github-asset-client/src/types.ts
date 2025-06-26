@@ -5,6 +5,7 @@ export interface GitHubAssetClientOptions {
   cacheEnabled?: boolean;
   cacheTTL?: number;
   retryOptions?: RetryOptions;
+  timeout?: number; // Request timeout in milliseconds
 }
 
 export interface RetryOptions {

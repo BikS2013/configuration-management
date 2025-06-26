@@ -1,6 +1,32 @@
 # Issues - Pending Items
 
+## Pending Items
+
+None at this time.
+
 ## Completed Items
+
+### GitHub-First with Database Fallback Implementation (2025-06-25)
+- **Description**: Updated the config-service to always use GitHub as primary source with database as fallback only
+- **Changes Made**:
+  - Modified source priorities: GitHub (1), Database (2)
+  - Database is now only accessed when GitHub fails
+  - Maintained auto-caching behavior when GitHub fetch succeeds
+  - Updated all documentation to reflect new behavior
+  - Simplified test page to remove database-only option
+  - Updated all examples to show correct priority configuration
+- **Impact**: 
+  - System always attempts to get latest configuration from GitHub
+  - Database provides resilience during GitHub outages
+  - Ensures fresh data when available with automatic failover
+- **Status**: Completed
+
+### Auto-caching Enhancement (2025-06-25)
+- **Description**: Verified that config-service library implements auto-caching when fetching from GitHub
+- **Implementation**: 
+  - The `GenericConfigService` in service.ts (lines 99-102) automatically caches to database when loading from GitHub
+  - No additional code needed - the library handles it transparently
+- **Status**: Completed
 
 ### Removed Fallback Options (2025-06-23)
 - **Description**: Removed local file and environment variable fallback options from the config-service package
@@ -18,7 +44,3 @@
   - If configuration is not found in either source, the service returns `null` instead of throwing an error
   - Applications must handle the `null` case explicitly
 - **Status**: Completed
-
-## Pending Items
-
-None at this time.

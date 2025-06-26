@@ -32,6 +32,7 @@ export class GitHubAssetClient {
       branch: options.branch || 'main',
       cacheEnabled: options.cacheEnabled !== false,
       cacheTTL: options.cacheTTL || 300000, // 5 minutes
+      timeout: options.timeout || 30000, // 30 seconds default
       retryOptions: {
         retries: 3,
         factor: 2,
@@ -48,7 +49,7 @@ export class GitHubAssetClient {
         Authorization: `Bearer ${this.maskToken(this.options.token)}`,
         Accept: 'application/vnd.github.v3+json',
       },
-      timeout: 30000,
+      timeout: this.options.timeout,
     });
 
     if (this.options.cacheEnabled) {

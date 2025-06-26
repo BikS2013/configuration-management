@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Config Manager Library Tester</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        
+        .form-section {
+            margin-bottom: 30px;
+        }
+        
+        .form-section h2 {
+            color: #444;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            color: #555;
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+        
+        .hint {
+            font-size: 12px;
+            color: #888;
+            margin-top: 5px;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+        
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .btn-primary {
+            background-color: #4CAF50;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #45a049;
+        }
+        
+        .btn-secondary {
+            background-color: #2196F3;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #1976D2;
+        }
+        
+        .result-section {
+            margin-top: 40px;
+            padding: 20px;
+            border-radius: 5px;
+            display: none;
+        }
+        
+        .result-section.success {
+            background-color: #e8f5e9;
+            border: 1px solid #4CAF50;
+        }
+        
+        .result-section.error {
+            background-color: #ffebee;
+            border: 1px solid #f44336;
+        }
+        
+        .result-section h3 {
+            margin-bottom: 15px;
+        }
+        
+        .error-details {
+            background-color: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        .asset-display {
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        
+        .asset-display pre {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #4CAF50;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Config Manager Library Tester</h1>
+        <p class="subtitle">Test the configuration management library with GitHub assets and PostgreSQL storage</p>
+        
+        <form id="testForm">
+            <div class="form-section">
+                <h2>GitHub Configuration</h2>
+                
+                <div class="form-group">
+                    <label for="githubToken">GitHub Token</label>
+                    <input type="password" id="githubToken" name="githubToken" placeholder="ghp_xxxxxxxxxxxx">
+                    <div class="hint">Personal access token with repo access</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="repoOwner">Repository Owner</label>
+                    <input type="text" id="repoOwner" name="repoOwner" placeholder="username or organization">
+                </div>
+                
+                <div class="form-group">
+                    <label for="repoName">Repository Name</label>
+                    <input type="text" id="repoName" name="repoName" placeholder="config-repo">
+                </div>
+                
+                <div class="form-group">
+                    <label for="branch">Branch (optional)</label>
+                    <input type="text" id="branch" name="branch" placeholder="main">
+                    <div class="hint">Leave empty to use default branch</div>
+                </div>
+            </div>
+            
+            <div class="form-section">
+                <h2>Asset Configuration</h2>
+                
+                <div class="form-group">
+                    <label for="ownerKey">Owner Key</label>
+                    <input type="text" id="ownerKey" name="ownerKey" placeholder="my-app">
+                </div>
+                
+                <div class="form-group">
+                    <label for="assetKey">Asset Key</label>
+                    <input type="text" id="assetKey" name="assetKey" placeholder="config.json">
+                </div>
+                
+                <div class="form-group">
+                    <label for="assetPath">Asset Path in Repository</label>
+                    <input type="text" id="assetPath" name="assetPath" placeholder="configs/my-app/config.json">
+                    <div class="hint">Path to the asset file in the repository</div>
+                </div>
+            </div>
+            
+            <div class="form-section">
+                <h2>Database Configuration</h2>
+                
+                <div class="form-group">
+                    <label for="dbConnectionString">PostgreSQL Connection String</label>
+                    <input type="text" id="dbConnectionString" name="dbConnectionString" 
+                           placeholder="postgresql://user:password@localhost:5432/configdb">
+                    <div class="hint">Format: postgresql://user:password@host:port/database</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="useDatabase">
+                        <input type="checkbox" id="useDatabase" name="useDatabase" style="width: auto; margin-right: 10px;">
+                        Enable database caching
+                    </label>
+                </div>
+            </div>
+            
+            <div class="form-section">
+                <h2>Test Options</h2>
+                
+                <div class="form-group">
+                    <label for="testMode">Test Mode</label>
+                    <select id="testMode" name="testMode">
+                        <option value="configService">Config Service (GitHub → DB fallback)</option>
+                        <option value="direct">Direct GitHub Fetch (no caching)</option>
+                    </select>
+                    <div class="hint">
+                        - Config Service: Fetches from GitHub first, falls back to DB if GitHub fails<br>
+                        - Direct: Bypasses the library, fetches directly from GitHub only
+                    </div>
+                </div>
+            </div>
+            
+            <div class="button-group">
+                <button type="submit" class="btn-primary">Run Test</button>
+                <button type="button" class="btn-secondary" onclick="loadSampleConfig()">Load Sample Config</button>
+            </div>
+        </form>
+        
+        <div class="loading">
+            <div class="spinner"></div>
+            <p>Testing configuration...</p>
+        </div>
+        
+        <div id="results" class="result-section">
+        </div>
+    </div>
+    
+    <script>
+        // Load configuration from environment on page load
+        async function loadEnvConfig() {
+            try {
+                const response = await fetch('/api/config');
+                const config = await response.json();
+                
+                document.getElementById('githubToken').value = config.githubToken;
+                document.getElementById('repoOwner').value = config.repoOwner;
+                document.getElementById('repoName').value = config.repoName;
+                document.getElementById('branch').value = config.branch;
+                document.getElementById('ownerKey').value = config.ownerKey;
+                document.getElementById('assetKey').value = config.assetKey;
+                document.getElementById('assetPath').value = config.assetPath;
+                document.getElementById('dbConnectionString').value = config.dbConnectionString;
+                document.getElementById('useDatabase').checked = config.useDatabase;
+                document.getElementById('testMode').value = config.defaultTestMode;
+            } catch (error) {
+                console.error('Failed to load environment configuration:', error);
+            }
+        }
+        
+        // Load env config when page loads
+        window.addEventListener('DOMContentLoaded', loadEnvConfig);
+        
+        function loadSampleConfig() {
+            document.getElementById('githubToken').value = 'ghp_xxxxxxxxxxxxxxxxxxxx';
+            document.getElementById('repoOwner').value = 'myorg';
+            document.getElementById('repoName').value = 'config-repo';
+            document.getElementById('branch').value = 'main';
+            document.getElementById('ownerKey').value = 'my-app';
+            document.getElementById('assetKey').value = 'config.json';
+            document.getElementById('assetPath').value = 'configs/my-app/config.json';
+            document.getElementById('dbConnectionString').value = 'postgresql://postgres:postgres@localhost:5432/configdb';
+            document.getElementById('useDatabase').checked = true;
+        }
+        
+        document.getElementById('testForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+            data.useDatabase = document.getElementById('useDatabase').checked;
+            
+            const loading = document.querySelector('.loading');
+            const results = document.getElementById('results');
+            
+            loading.style.display = 'block';
+            results.style.display = 'none';
+            
+            try {
+                const response = await fetch('/api/test', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                loading.style.display = 'none';
+                results.style.display = 'block';
+                
+                if (result.success) {
+                    results.className = 'result-section success';
+                    results.innerHTML = `
+                        <h3>✅ Test Successful!</h3>
+                        <div class="asset-display">
+                            ${result.metadata?.actualSource ? `
+                            <div style="margin-bottom: 15px; padding: 12px; background-color: ${result.metadata.actualSource === 'database' ? '#fff3cd' : '#d4edda'}; border-radius: 5px; border: 1px solid ${result.metadata.actualSource === 'database' ? '#ffeaa7' : '#c3e6cb'};">
+                                <strong>📍 Source:</strong> Asset loaded from <strong>${result.metadata.actualSource.toUpperCase()}</strong>
+                                ${result.metadata.actualSource === 'database' ? ' (GitHub was unavailable - using cached version)' : ' (automatically cached to database)'}
+                            </div>
+                            ` : ''}
+                            <h4>Retrieved Asset Content:</h4>
+                            <pre>${result.asset}</pre>
+                            ${result.metadata ? `
+                            <h4>Metadata:</h4>
+                            <pre>${JSON.stringify(result.metadata, null, 2)}</pre>
+                            ` : ''}
+                            ${result.metadata?.note ? `
+                            <div style="margin-top: 15px; padding: 10px; background-color: #e3f2fd; border-radius: 5px; color: #1565c0;">
+                                <strong>ℹ️ Note:</strong> ${result.metadata.note}
+                            </div>
+                            ` : ''}
+                        </div>
+                    `;
+                } else {
+                    results.className = 'result-section error';
+                    results.innerHTML = `
+                        <h3>❌ Test Failed</h3>
+                        <div class="error-details">
+                            <strong>Error Type:</strong> ${result.errorType || 'Unknown'}
+                            <strong>Message:</strong> ${result.error}
+                            ${result.metadata?.hint ? `\n\n<div style="margin-top: 10px; padding: 10px; background-color: #f8d7da; border-radius: 5px; color: #721c24;"><strong>💡 Hint:</strong> ${result.metadata.hint}</div>` : ''}
+                            ${result.metadata?.note ? `\n<div style="margin-top: 10px; padding: 10px; background-color: #f5c6cb; border-radius: 5px; color: #721c24;"><strong>ℹ️ Info:</strong> ${result.metadata.note}</div>` : ''}
+                            ${result.stack ? `\n\n<strong>Stack Trace:</strong>\n${result.stack}` : ''}
+                            ${result.details ? `\n\n<strong>Additional Details:</strong>\n${JSON.stringify(result.details, null, 2)}` : ''}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                loading.style.display = 'none';
+                results.style.display = 'block';
+                results.className = 'result-section error';
+                results.innerHTML = `
+                    <h3>❌ Request Failed</h3>
+                    <div class="error-details">
+                        <strong>Error:</strong> ${error.message}
+                        <strong>Type:</strong> Network or Server Error
+                        
+                        Make sure the test server is running on port 3333.
+                    </div>
+                `;
+            }
+        });
+    </script>
+</body>
+</html>

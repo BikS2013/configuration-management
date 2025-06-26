@@ -14,7 +14,8 @@ export class GitHubConfigSource {
     try {
       const asset = await this.client.getAsset(this.assetKey);
       return asset.content;
-    } catch (error) {
+    } catch (error: any) {
+      console.warn(`GitHub source failed for ${this.assetKey}: ${error.message}`);
       throw new Error(`Failed to load config from GitHub: ${error}`);
     }
   }
