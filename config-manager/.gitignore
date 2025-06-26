@@ -184,3 +184,5 @@ playwright/.cache/
 .env*
 !.env.example
 !.env.*.example
+
+.DS_Store
