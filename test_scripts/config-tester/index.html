@@ -265,6 +265,14 @@
                         - Direct: Bypasses the library, fetches directly from GitHub only
                     </div>
                 </div>
+                
+                <div class="form-group">
+                    <label for="verbose">
+                        <input type="checkbox" id="verbose" name="verbose" style="width: auto; margin-right: 10px;">
+                        Enable verbose logging
+                    </label>
+                    <div class="hint">Shows detailed logs including content reads, differences, and database operations</div>
+                </div>
             </div>
             
             <div class="button-group">
@@ -325,6 +333,7 @@
             const formData = new FormData(e.target);
             const data = Object.fromEntries(formData);
             data.useDatabase = document.getElementById('useDatabase').checked;
+            data.verbose = document.getElementById('verbose').checked;
             
             const loading = document.querySelector('.loading');
             const results = document.getElementById('results');

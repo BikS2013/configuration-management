@@ -4,6 +4,7 @@ export interface AssetDatabaseOptions {
   ownerKey: string;
   ssl?: boolean;
   poolSize?: number;
+  verbose?: boolean;
 }
 
 export interface AssetRecord {

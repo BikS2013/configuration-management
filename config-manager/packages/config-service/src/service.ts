@@ -35,6 +35,11 @@ export class GenericConfigService<T> extends ConfigService<T> {
           throw new Error(`Unknown source type: ${sourceConfig.type}`);
       }
 
+      // Set verbose mode if enabled
+      if (this.options.verbose && source.setVerbose) {
+        source.setVerbose(true);
+      }
+
       this.sources.set(`${sourceConfig.type}:${sourceConfig.priority}`, {
         source,
         config: sourceConfig,
@@ -72,15 +77,18 @@ export class GenericConfigService<T> extends ConfigService<T> {
   }
 
   async reload(): Promise<void> {
+    this.log('🔄 Starting configuration reload...');
     console.log('Service: Starting reload...');
     const result = await this.loadConfiguration();
     if (result) {
       console.log('Service: Configuration loaded successfully');
+      this.log(`✅ Configuration loaded successfully from ${result.source}`);
       this.configData = result.data;
       this.processConfiguration(result.data);
       this.initialized = true;
     } else {
       console.log('Service: No configuration found in any source');
+      this.log('❌ No configuration found in any source');
       this.configData = undefined;
       this.configs.clear();
       this.initialized = true;
@@ -98,16 +106,31 @@ export class GenericConfigService<T> extends ConfigService<T> {
     // Try sources in priority order
     for (const [key, { source, config }] of this.sources) {
       try {
+        this.log(`🔍 Attempting to load from ${config.type} source (priority ${config.priority})`);
         console.log(`Attempting to load from ${config.type} source (priority ${config.priority})`);
         const content = await source.load();
         const data = await this.options.parser(content);
 
         // If we loaded from GitHub, try to cache in database
         if (config.type === 'github') {
+          // First, try to load from database to compare
+          let dbContent: string | null = null;
+          for (const [, { source: dbSource, config: dbConfig }] of this.sources) {
+            if (dbConfig.type === 'database') {
+              try {
+                dbContent = await dbSource.load();
+              } catch {
+                // Database doesn't have it yet, that's OK
+              }
+              break;
+            }
+          }
+          
           await this.cacheToDatabase(content);
         }
 
         console.log(`Successfully loaded from ${config.type} source`);
+        this.log(`✅ Successfully loaded from ${config.type} source`);
         this.lastLoadSource = config.type;
         return {
           data,
@@ -116,6 +139,7 @@ export class GenericConfigService<T> extends ConfigService<T> {
         };
       } catch (error: any) {
         console.log(`Failed to load from ${config.type}: ${error.message}, trying next source...`);
+        this.log(`⚠️  Failed to load from ${config.type}: ${error.message}`);
         // Continue to next source silently
         continue;
       }

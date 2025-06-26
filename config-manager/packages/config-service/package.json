@@ -1,6 +1,6 @@
 {
   "name": "@biks2013/config-service",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Configuration service with multi-source fallback pattern",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -20,8 +20,8 @@
     "typescript": "^5.4.3"
   },
   "peerDependencies": {
-    "@biks2013/github-asset-client": "^1.0.0",
-    "@biks2013/asset-database": "^1.0.0",
+    "@biks2013/github-asset-client": "^1.0.1",
+    "@biks2013/asset-database": "^1.0.1",
     "@types/node": ">=18"
   },
   "peerDependenciesMeta": {

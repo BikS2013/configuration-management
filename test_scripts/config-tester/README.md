@@ -95,6 +95,14 @@ The server includes:
 - Graceful shutdown handling (SIGTERM/SIGINT)
 - Environment variable hot-reloading
 - 1-second delay to batch multiple file changes
+- Console clearing with Ctrl+L hotkey
+
+## Keyboard Shortcuts
+
+While the server is running, you can use these keyboard shortcuts:
+
+- **Ctrl+L** - Clear the console (useful when logs get too verbose)
+- **Ctrl+C** - Gracefully shut down the server
 
 ## Troubleshooting
 

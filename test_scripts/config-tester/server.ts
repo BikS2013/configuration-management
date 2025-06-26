@@ -39,7 +39,8 @@ app.get('/api/config', (req, res) => {
         assetPath: process.env.ASSET_PATH || '',
         dbConnectionString: process.env.DB_CONNECTION_STRING || '',
         useDatabase: process.env.USE_DATABASE === 'true',
-        defaultTestMode: process.env.DEFAULT_TEST_MODE || 'configService'
+        defaultTestMode: process.env.DEFAULT_TEST_MODE || 'configService',
+        databaseVerbose: process.env.DATABASE_VERBOSE === 'true'
     });
 });
 
@@ -54,7 +55,8 @@ app.post('/api/test', async (req, res) => {
         assetPath,
         dbConnectionString,
         useDatabase,
-        testMode
+        testMode,
+        verbose
     } = req.body;
 
     try {
@@ -91,18 +93,45 @@ app.post('/api/test', async (req, res) => {
         // Initialize database if configured
         if (useDatabase && dbConnectionString && testMode !== 'direct') {
             try {
+                if (verbose) {
+                    console.log('\n' + '='.repeat(60));
+                    console.log('🗄️  DATABASE INITIALIZATION');
+                    console.log('='.repeat(60));
+                    console.log(`📌 Owner Key: ${ownerKey}`);
+                    console.log(`📌 Owner Category: config-manager`);
+                    console.log(`📌 Connection: ${dbConnectionString.replace(/:[^:@]+@/, ':****@')}`); // Hide password
+                    console.log('='.repeat(60) + '\n');
+                }
+                
                 console.log('Initializing database with ownerKey:', ownerKey);
                 database = new AssetDatabaseService({
                     connectionString: dbConnectionString,
                     ownerCategory: 'config-manager',
-                    ownerKey: ownerKey
+                    ownerKey: ownerKey,
+                    verbose: verbose || process.env.DATABASE_VERBOSE === 'true'
                 });
                 await database.ensureSchema();
                 console.log('Database initialized successfully');
                 
                 // Debug: List all assets in database
                 const allAssets = await database.listAssets();
-                console.log('All assets in database:', allAssets);
+                
+                if (verbose && allAssets.length > 0) {
+                    console.log('\n📊 DATABASE CONTENTS:');
+                    console.log('─'.repeat(60));
+                    allAssets.forEach((asset, index) => {
+                        console.log(`\n[${index + 1}] Asset: ${asset.asset_key}`);
+                        console.log(`    Category: ${asset.asset_category}`);
+                        console.log(`    Created: ${new Date(asset.created_at).toLocaleString()}`);
+                        console.log(`    Hash: ${asset.data_hash.substring(0, 16)}...`);
+                        if (asset.description) {
+                            console.log(`    Description: ${asset.description}`);
+                        }
+                    });
+                    console.log('─'.repeat(60) + '\n');
+                } else {
+                    console.log('All assets in database:', allAssets);
+                }
             } catch (dbError: any) {
                 console.error('Database initialization error:', dbError);
                 throw new Error(`Database connection failed: ${dbError.message}. Check your connection string and ensure PostgreSQL is running.`);
@@ -166,6 +195,7 @@ app.post('/api/test', async (req, res) => {
                 }
                 
                 console.log('Creating ConfigService with sources:', sources.map(s => s.type));
+                console.log('Verbose mode:', verbose, 'Type:', typeof verbose);
                 
                 const configServiceFactory = createConfigService({
                     sources,
@@ -176,7 +206,8 @@ app.post('/api/test', async (req, res) => {
                         } catch {
                             return { type: 'text', data: content };
                         }
-                    }
+                    },
+                    verbose: verbose === true  // Enable verbose logging based on checkbox
                 }, (service, parsed) => {
                     // Store the parsed data in the service's config map
                     // The service parameter is the actual service instance
@@ -294,7 +325,28 @@ const server = app.listen(PORT, () => {
     console.log(`Config tester server running at http://localhost:${PORT}`);
     console.log(`Open http://localhost:${PORT} in your browser to test the library`);
     console.log('Auto-reload enabled: Server will restart on file changes');
+    console.log('\nPress Ctrl+L to clear the console');
 });
+
+// Set up keyboard input handling
+if (process.stdin.isTTY) {
+    process.stdin.setRawMode(true);
+    process.stdin.resume();
+    process.stdin.setEncoding('utf8');
+    
+    process.stdin.on('data', (key: string) => {
+        // Ctrl+C
+        if (key === '\u0003') {
+            gracefulShutdown('SIGINT');
+        }
+        // Ctrl+L (clear screen)
+        else if (key === '\u000C') {
+            console.clear();
+            console.log(`Config tester server running at http://localhost:${PORT}`);
+            console.log('Press Ctrl+L to clear the console | Ctrl+C to exit');
+        }
+    });
+}
 
 // Graceful shutdown
 const gracefulShutdown = (signal: string) => {
@@ -303,6 +355,12 @@ const gracefulShutdown = (signal: string) => {
     // Stop watching .env file
     if (fs.existsSync(envPath)) {
         fs.unwatchFile(envPath);
+    }
+    
+    // Restore terminal settings
+    if (process.stdin.isTTY && process.stdin.setRawMode) {
+        process.stdin.setRawMode(false);
+        process.stdin.pause();
     }
     
     server.close(() => {

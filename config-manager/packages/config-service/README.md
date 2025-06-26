@@ -167,6 +167,7 @@ Creates a singleton configuration service instance.
 interface ConfigServiceOptions<T> {
   sources: ConfigSource[];           // Configuration sources with priorities
   parser: (content: string) => T;    // Parser function (e.g., JSON.parse, YAML.parse)
+  verbose?: boolean;                 // Enable detailed logging (default: false)
 }
 ```
 
@@ -200,6 +201,54 @@ The service follows a GitHub-first approach with database fallback:
 3. **Returns `null`**: When configuration not found in any source
 
 This ensures you always get the latest configuration when possible, with automatic failover for reliability.
+
+## Verbose Logging
+
+Enable verbose mode to get detailed insights into the configuration loading process:
+
+```typescript
+const configService = createConfigService<AppConfig>({
+  sources: [...],
+  parser: YAML.parse,
+  verbose: true  // Enable verbose logging
+}, processor);
+```
+
+When verbose mode is enabled, you'll see:
+
+1. **GitHub Reads**: Detailed information about assets read from GitHub
+   - Asset path being read
+   - File size and SHA
+   - Content preview
+
+2. **Database Operations**: 
+   - Asset registration logs
+   - Content length and creation timestamps
+   - **Difference Detection**: Automatic comparison between GitHub and cached versions
+
+3. **Fallback Behavior**: Clear logs showing which source was attempted and why it failed
+
+Example verbose output:
+```
+[ConfigService] Starting configuration reload...
+[GitHub] Reading asset from path: config/app.yaml
+[GitHub] Successfully read asset 'config/app.yaml':
+[GitHub]   - Size: 1234 bytes
+[GitHub]   - SHA: abc123def456...
+[GitHub]   - Content preview: database:\n  host: localhost\n  port: 5432\n...
+[Database] Registering asset 'app-config' in database
+[Database] DIFFERENCE DETECTED: Content from GitHub differs from database cache
+[Database]   - Previous length: 1200 bytes
+[Database]   - New length: 1234 bytes
+[Database] Successfully registered asset 'app-config' in database
+[ConfigService] Configuration loaded successfully from github:config/app.yaml
+```
+
+This is especially useful for:
+- Debugging configuration issues
+- Monitoring configuration changes
+- Understanding fallback behavior
+- Tracking cache updates
 
 ## License
 

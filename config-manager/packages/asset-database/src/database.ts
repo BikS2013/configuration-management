@@ -91,17 +91,26 @@ export class AssetDatabaseService {
         params.push(category);
       }
 
-      console.log('Database getAsset query:', {
-        ownerKey: this.options.ownerKey,
-        assetKey: key,
-        category: category || 'not specified',
-        query: query.trim(),
-        params
-      });
+      if (this.options.verbose) {
+        console.log('\n🔍 Database getAsset query:', {
+          ownerKey: this.options.ownerKey,
+          assetKey: key,
+          category: category || 'not specified',
+          query: query.trim(),
+          params
+        });
+      }
 
       const result = await client.query(query, params);
       
-      console.log(`Database getAsset result: found ${result.rows.length} rows`);
+      if (this.options.verbose) {
+        console.log(`📊 Database getAsset result: found ${result.rows.length} rows`);
+        if (result.rows.length > 0) {
+          console.log(`   Asset ID: ${result.rows[0].id}`);
+          console.log(`   Created: ${new Date(result.rows[0].created_at).toLocaleString()}`);
+          console.log(`   Hash: ${result.rows[0].data_hash.substring(0, 16)}...`);
+        }
+      }
       
       if (result.rows.length === 0) {
         return null;
@@ -128,6 +137,14 @@ export class AssetDatabaseService {
     const data = { content };
     const dataHash = this.calculateHash(JSON.stringify(data));
 
+    if (this.options.verbose) {
+      console.log('\n💾 Database storeAsset operation:');
+      console.log(`   🔑 Key: ${key}`);
+      console.log(`   📁 Category: ${category}`);
+      console.log(`   📏 Content size: ${content.length} bytes`);
+      console.log(`   🔐 New hash: ${dataHash.substring(0, 16)}...`);
+    }
+
     let client: PoolClient | undefined;
     try {
       client = await this.pool.connect();
@@ -146,6 +163,11 @@ export class AssetDatabaseService {
         
         // Only update if content has changed
         if (existing.data_hash !== dataHash) {
+          if (this.options.verbose) {
+            console.log(`   ♻️  Asset exists, updating...`);
+            console.log(`   📝 Old hash: ${existing.data_hash.substring(0, 16)}...`);
+          }
+          
           // Insert into history log
           await client.query(
             `INSERT INTO public.asset_log 
@@ -162,8 +184,20 @@ export class AssetDatabaseService {
             WHERE id = $4`,
             [data, dataHash, description, existing.id]
           );
+          
+          if (this.options.verbose) {
+            console.log(`   ✅ Asset updated successfully`);
+          }
+        } else {
+          if (this.options.verbose) {
+            console.log(`   ⏸️  Asset unchanged (same hash)`);
+          }
         }
       } else {
+        if (this.options.verbose) {
+          console.log(`   🆕 Creating new asset...`);
+        }
+        
         // Insert new asset
         await client.query(
           `INSERT INTO public.asset 
@@ -171,9 +205,17 @@ export class AssetDatabaseService {
           VALUES ($1, $2, $3, $4, $5, $6, $7)`,
           [this.options.ownerCategory, category, this.options.ownerKey, key, description, data, dataHash]
         );
+        
+        if (this.options.verbose) {
+          console.log(`   ✅ New asset created successfully`);
+        }
       }
 
       await client.query('COMMIT');
+      
+      if (this.options.verbose) {
+        console.log(`   ✅ Transaction committed\n`);
+      }
     } catch (error) {
       if (client) {
         await client.query('ROLLBACK');

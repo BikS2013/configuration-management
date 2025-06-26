@@ -4,6 +4,7 @@ import type { AssetDatabaseService } from '@biks2013/asset-database';
 export interface ConfigServiceOptions<T> {
   sources: ConfigSource[];
   parser: (content: string) => T | Promise<T>;
+  verbose?: boolean;
 }
 
 export interface ConfigSource {
@@ -45,6 +46,12 @@ export abstract class ConfigService<T> {
       ...options,
       sources: [...options.sources].sort((a, b) => a.priority - b.priority),
     };
+  }
+
+  protected log(message: string, ...args: any[]): void {
+    if (this.options.verbose) {
+      console.log(`[ConfigService] ${message}`, ...args);
+    }
   }
 
   abstract getConfig(key?: string): Promise<any>;
